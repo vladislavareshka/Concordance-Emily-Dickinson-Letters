@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Concordance - the Letters of Emily Dickinson</title>
+  <style>
+    :root{
+      --bg:#ffffff; --fg:#212529; --muted:#6c757d; --border:#dee2e6; --accent:#0d6efd; --soft:#f8f9fa;
+    }
+    *{box-sizing:border-box}
+    body{margin:0; font:14px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji"; background:var(--bg); color:var(--fg)}
+    .container{max-width:1200px; margin:1rem auto; padding:0 1rem}
+    h1{font-size:1.5rem; margin:.25rem 0 1rem}
+    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace}
+
+    /* Tabs */
+    .tabs{border-bottom:1px solid var(--border); display:flex; gap:.25rem}
+    .tabbtn{border:1px solid transparent; border-bottom:0; padding:.5rem .75rem; background:none; cursor:pointer; border-top-left-radius:.25rem; border-top-right-radius:.25rem; color:var(--accent)}
+    .tabbtn.active{border-color:var(--border); background:var(--bg); color:inherit}
+    .tabpanel{display:none}
+    .tabpanel.active{display:block}
+
+    /* Toolbar */
+    .toolbar{display:flex; gap:.5rem; align-items:center; margin:.75rem 0}
+    .btn{padding:.35rem .6rem; border:1px solid var(--border); background:var(--bg); cursor:pointer; border-radius:.25rem}
+    .btn:hover{background:var(--soft)}
+    .input{padding:.35rem .5rem; border:1px solid var(--border); border-radius:.25rem; min-width:14rem}
+    .select{padding:.3rem .5rem; border:1px solid var(--border); border-radius:.25rem}
+
+    /* Table */
+    table{border-collapse:collapse; width:100%}
+    thead th{position:sticky; top:0; background:var(--soft); z-index:1; border-bottom:1px solid var(--border)}
+    th, td{border-bottom:1px solid var(--border); padding:.4rem .5rem; vertical-align:top}
+    th.sortable{cursor:pointer}
+    th.sortable::after{content:"\25B4\25BE"; font-size:.7rem; opacity:.35; margin-left:.35rem}
+    tr:nth-child(even) td{background:#fff}
+    .kwic-left,.kwic-right{white-space:pre-wrap}
+
+    /* Filters */
+    .colfilters input{width:100%; padding:.25rem .35rem; border:1px solid var(--border); border-radius:.2rem}
+
+    /* Pagination */
+    .pager{display:flex; gap:.25rem; align-items:center; flex-wrap:wrap; margin-top:.5rem}
+    .pager .btn{min-width:2rem; text-align:center}
+    .muted{color:var(--muted)}
+
+    /* Lexeme index */
+    #lexemeIndex pre{max-height:65vh; overflow:auto; background:var(--soft); border:1px solid var(--border); padding:1rem}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Concordance - the Letters of Emily Dickinson</h1>
+
+    <div class="tabs" role="tablist" aria-label="Concordance views">
+      <button class="tabbtn active" data-target="#pane-table" role="tab" aria-selected="true" aria-controls="pane-table" id="tab-table">Table</button>
+      <button class="tabbtn" data-target="#pane-lexemes" role="tab" aria-selected="false" aria-controls="pane-lexemes" id="tab-lexemes">Lexeme Index</button>
+    </div>
+
+    <!-- TABLE PANE -->
+    <section class="tabpanel active" id="pane-table" role="tabpanel" aria-labelledby="tab-table">
+      <div class="toolbar">
+        <input id="globalSearch" class="input" placeholder="Search..." />
+        <label class="muted">Page size
+          <select id="pageSize" class="select">
+            <option>25</option><option selected>50</option><option>100</option><option>250</option><option>500</option><option>All</option>
+          </select>
+        </label>
+        <button id="clearFilters" class="btn" type="button">Clear column filters</button>
+        <button id="resetAll" class="btn" type="button">Reset</button>
+      </div>
+
+      <div style="overflow:auto; border:1px solid var(--border);">
+        <table id="kwicTable" aria-describedby="Concordance table">
+          <thead>
+            <tr>
+              <th class="sortable" data-key="LetterNum">Letter #</th><th class="sortable" data-key="LetterInfo">Addressee and date</th>
+              <th class="sortable" data-key="Left Context">Left Context</th>
+              <th class="sortable" data-key="Words">Words</th>
+              <th class="sortable" data-key="Right Context">Right Context</th>
+            </tr>
+            <tr class="colfilters">
+              <th><input data-key="LetterNum" placeholder="Filter #"/></th><th><input data-key="LetterInfo" placeholder="Filter addressee/date"/></th>
+              <th><input data-key="Left Context" placeholder="Filter Left"/></th>
+              <th>
+  <div style="display:flex;align-items:center;gap:4px;">
+    <input
+      data-key="Words"
+      placeholder="Filter Word"
+    />
+    <span
+      title="Search syntax:
+love = contains
+=love = exact word
+/^lov/ = regex search"
+      style="cursor:help;color:#0d6efd;font-weight:bold;"
+    >?</span>
+  </div>
+</th>
+              <th><input data-key="Right Context" placeholder="Filter Right"/></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="pager" id="pager"></div>
+    </section>
+
+    <!-- LEXEME PANE -->
+    <section class="tabpanel" id="pane-lexemes" role="tabpanel" aria-labelledby="tab-lexemes">
+      <div class="toolbar">
+        <input id="lexemeFilter" class="input" placeholder="Filter lexemes... (e.g., afraid)" />
+        <button id="copyLexemeIndex" class="btn" type="button">Copy index</button>
+        <label class="muted"><input type="checkbox" id="hideStopwords"> Hide stopwords</label> <span class="muted" id="lexemeSummary"></span>
+      </div>
+      <div id="lexemeIndex">
+        <pre id="lexemeText" class="mono"></pre>
+      </div>
+    </section>
+  </div>
+
+  <!-- Embedded data -->
+  <script>
+fetch("data.json").then(r=>r.json()).then(d=>{window.__KWIC_DATA__=d;}).catch(console.error);
+</script>
+
+  <!-- Vanilla JS engine: tabs, table (sort/filter/paginate/search), lexeme index with counts -->
+  <script>
+    const state = { data: [], view: [], sortKey:null, sortDir:1, page:1, pageSize:50, colFilters:{}, globalSearch:'' };
+
+    // ---------- Utilities ----------
+    const $ = sel => document.querySelector(sel);
+    const $$ = sel => Array.from(document.querySelectorAll(sel));
+    function naturalCmp(a, b){
+  if (typeof a === 'number' && typeof b === 'number') {
+    return a - b;
+  }
+
+  const rx=/(\D+)(\d+)/i;
+  const A=String(a??'');
+  const B=String(b??'');
+
+  const ma=A.match(rx), mb=B.match(rx);
+  if(ma&&mb&&ma[1]===mb[1]) return Number(ma[2])-Number(mb[2]);
+
+  return A.localeCompare(B);
+}
+    function extractLetterId(letter){
+      const s=String(letter||''); const m=s.match(/^(\w+)(?=\s|\s*--|$)/); return m?m[1]:s.trim();
+    }
+    function norm(s){ return String(s||'').toLowerCase(); }
+
+    // ---------- Tabs ----------
+    function initTabs(){
+      $$('.tabbtn').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          $$('.tabbtn').forEach(b=>{b.classList.toggle('active', b===btn); b.setAttribute('aria-selected', b===btn ? 'true':'false');});
+          $$('.tabpanel').forEach(p=>p.classList.remove('active'));
+          const pane=document.querySelector(btn.dataset.target); if(pane){ pane.classList.add('active'); }
+          if(btn.id==='tab-table'){ resetTableView(); }
+        });
+      });
+    }
+
+    // ---------- Data & rendering ----------
+    function loadData(){
+      try{ state.data = (()=>{const d=window.__KWIC_DATA__;return d.rows.map((r,i)=>{const s=String(d.letters[r[0]]||'');const m=s.match(/^(\d+)\s*--\s*(.*)$/);return {_rowId:i+1,Letter:s,'Left Context':r[1]||'','Words':r[2]||'','Right Context':r[3]||'',LetterNum:m?parseInt(m[1],10):999999,LetterInfo:m?m[2].replace(/\.txt$/,''):s};});})() }
+      catch(e){ console.error('Data parse failed', e); state.data=[]; }
+      state.view = state.data.slice();
+    }
+
+    
+function wordMatchPrefix(value,q){const v=String(value||'');if(!q) return true;try{if(q.startsWith('/')){const pat=q.slice(1);return new RegExp(pat,'i').test(v);}if(q.startsWith('=')){return v.trim().toLowerCase()===q.slice(1).trim().toLowerCase();}return v.toLowerCase().includes(q.toLowerCase());}catch(e){return true;}}
+function applyFilters(){
+      const gs = state.globalSearch.trim().toLowerCase();
+      const cf = state.colFilters;
+      let rows = state.data.filter(r=>{
+        // column filters (AND)
+        for(const k in cf){ const q=cf[k]; if(k==='Words'){ if(q && !wordMatchPrefix(r[k],q)) return false; } else { if(q && !String(r[k]||'').toLowerCase().includes(q)) return false; }}
+        // global search (OR across fields)
+        if(gs){ const t = (String(r['LetterNum'])+String(r['LetterInfo'])+String(r['Left Context'])+String(r['Words'])+String(r['Right Context'])).toLowerCase(); if(!t.includes(gs)) return false; }
+        return true;
+      });
+      // sort
+      if(state.sortKey){ const key=state.sortKey, dir=state.sortDir; rows.sort((a,b)=> dir*(naturalCmp(a[key], b[key]))); }
+      state.view = rows;
+      state.page = 1;
+      renderTable();
+    }
+
+    function renderTable(){
+      const tbody = $('#kwicTable tbody');
+      const total = state.view.length;
+      const ps = state.pageSize === 'All' ? total : Number(state.pageSize);
+      const pages = ps ? Math.max(1, Math.ceil(total/ps)) : 1;
+      if(state.page>pages) state.page=pages;
+      const start = ps ? (state.page-1)*ps : 0;
+      const end = ps ? Math.min(total, start+ps) : total;
+      const slice = state.view.slice(start, end);
+      tbody.innerHTML = slice.map(r=>`<tr><td class="mono">${esc(r['LetterNum'])}</td><td>${esc(r['LetterInfo'])}</td><td class="kwic-left">${esc(r['Left Context'])}</td><td>${esc(r['Words'])}</td><td class="kwic-right">${esc(r['Right Context'])}</td></tr>`).join('');
+      renderPager(pages, total, start, end);
+    }
+
+    function renderPager(pages, total, start, end){
+      const p = $('#pager');
+      const info = `<span class="muted">Showing ${start+1}-${end} of ${total}</span>`;
+      function btn(label, disabled, click){ return `<button class="btn" ${disabled? 'disabled':''} data-click="${click||''}">${label}</button>`; }
+      let html = '';
+      html += btn('⏮', state.page<=1, 'first');
+      html += btn('◀', state.page<=1, 'prev');
+      html += `<span class="muted">Page ${state.page} / ${pages}</span>`;
+      html += btn('▶', state.page>=pages, 'next');
+      html += btn('⏭', state.page>=pages, 'last');
+      html += ' ' + info;
+      p.innerHTML = html;
+      p.querySelectorAll('button[data-click]').forEach(b=>{
+        b.addEventListener('click', ()=>{
+          const act = b.getAttribute('data-click');
+          if(act==='first') state.page=1; else if(act==='prev') state.page=Math.max(1,state.page-1); else if(act==='next') state.page=Math.min(pages,state.page+1); else if(act==='last') state.page=pages;
+          renderTable();
+        });
+      });
+    }
+
+    function esc(s){ return String(s??'').replace(/[&<>]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c])); }
+
+    // ---------- Sorting & filters UI ----------
+    function initTableUI(){
+      // sorting
+      $$('#kwicTable thead th.sortable').forEach(th=>{
+        th.addEventListener('click', ()=>{
+          const key = th.dataset.key; if(state.sortKey===key){ state.sortDir*=-1; } else { state.sortKey=key; state.sortDir=1; }
+          applyFilters();
+        });
+      });
+      // column filters
+      $$('#kwicTable thead .colfilters input').forEach(inp=>{
+        inp.addEventListener('input', ()=>{ state.colFilters[inp.dataset.key] = inp.value.trim().toLowerCase(); applyFilters(); });
+      });
+      // global search
+      $('#globalSearch').addEventListener('input', ()=>{ state.globalSearch = $('#globalSearch').value; applyFilters(); });
+      // page size
+      $('#pageSize').addEventListener('change', ()=>{ state.pageSize = $('#pageSize').value; renderTable(); });
+      // reset & clear
+      $('#clearFilters').addEventListener('click', ()=>{ $$('#kwicTable thead .colfilters input').forEach(i=>i.value=''); state.colFilters={}; applyFilters(); });
+      $('#resetAll').addEventListener('click', ()=>{ $('#globalSearch').value=''; state.globalSearch=''; $$('#kwicTable thead .colfilters input').forEach(i=>i.value=''); state.colFilters={}; state.sortKey=null; state.sortDir=1; $('#pageSize').value='50'; state.pageSize=50; applyFilters(); });
+    }
+
+    // ---------- Lexeme Index with counts ----------
+const STOPWORDS=new Set(["a", "a's", "able", "about", "above", "according", "accordingly", "across", "actually", "after", "afterwards", "again", "against", "ain't", "all", "allow", "allows", "almost", "alone", "along", "already", "also", "although", "always", "am", "among", "amongst", "an", "and", "another", "any", "anybody", "anyhow", "anyone", "anything", "anyway", "anyways", "anywhere", "apart", "appear", "appreciate", "appropriate", "are", "aren't", "around", "as", "aside", "ask", "asking", "associated", "at", "available", "away", "awfully", "b", "be", "became", "because", "become", "becomes", "becoming", "been", "before", "beforehand", "behind", "being", "believe", "below", "beside", "besides", "best", "better", "between", "beyond", "both", "brief", "but", "by", "c", "c'mon", "c's", "came", "can", "can't", "cannot", "cant", "cause", "causes", "certain", "certainly", "changes", "clearly", "co", "com", "come", "comes", "concerning", "consequently", "consider", "considering", "contain", "containing", "contains", "corresponding", "could", "couldn't", "course", "currently", "d", "definitely", "described", "despite", "did", "didn't", "different", "do", "does", "doesn't", "doing", "don't", "done", "down", "downwards", "during", "e", "each", "edu", "eg", "eight", "either", "else", "elsewhere", "enough", "entirely", "especially", "et", "etc", "even", "ever", "every", "everybody", "everyone", "everything", "everywhere", "ex", "exactly", "example", "except", "f", "far", "few", "fifth", "first", "five", "followed", "following", "follows", "for", "former", "formerly", "forth", "four", "from", "further", "furthermore", "g", "get", "gets", "getting", "given", "gives", "go", "goes", "going", "gone", "got", "gotten", "greetings", "h", "had", "hadn't", "happens", "hardly", "has", "hasn't", "have", "haven't", "having", "he", "he's", "hello", "help", "hence", "her", "here", "here's", "hereafter", "hereby", "herein", "hereupon", "hers", "herself", "hi", "him", "himself", "his", "hither", "hopefully", "how", "howbeit", "however", "i", "i'd", "i'll", "i'm", "i've", "ie", "if", "ignored", "immediate", "in", "inasmuch", "inc", "indeed", "indicate", "indicated", "indicates", "inner", "insofar", "instead", "into", "inward", "is", "isn't", "it", "it'd", "it'll", "it's", "its", "itself", "j", "just", "k", "keep", "keeps", "kept", "know", "knows", "known", "l", "last", "lately", "later", "latter", "latterly", "least", "less", "lest", "let", "let's", "like", "liked", "likely", "little", "look", "looking", "looks", "ltd", "m", "mainly", "many", "may", "maybe", "me", "mean", "meanwhile", "merely", "might", "more", "moreover", "most", "mostly", "much", "must", "my", "myself", "n", "name", "namely", "nd", "near", "nearly", "necessary", "need", "needs", "neither", "never", "nevertheless", "new", "next", "nine", "no", "nobody", "non", "none", "noone", "nor", "normally", "not", "nothing", "novel", "now", "nowhere", "o", "obviously", "of", "off", "often", "oh", "ok", "okay", "old", "on", "once", "one", "ones", "only", "onto", "or", "other", "others", "otherwise", "ought", "our", "ours", "ourselves", "out", "outside", "over", "overall", "own", "p", "particular", "particularly", "per", "perhaps", "placed", "please", "plus", "possible", "presumably", "probably", "provides", "q", "que", "quite", "qv", "r", "rather", "rd", "re", "really", "reasonably", "regarding", "regardless", "regards", "relatively", "respectively", "right", "s", "said", "same", "saw", "say", "saying", "says", "second", "secondly", "see", "seeing", "seem", "seemed", "seeming", "seems", "seen", "self", "selves", "sensible", "sent", "serious", "seriously", "seven", "several", "shall", "she", "should", "shouldn't", "since", "six", "so", "some", "somebody", "somehow", "someone", "something", "sometime", "sometimes", "somewhat", "somewhere", "soon", "sorry", "specified", "specify", "specifying", "still", "sub", "such", "sup", "sure", "t", "t's", "take", "taken", "tell", "tends", "th", "than", "thank", "thanks", "thanx", "that", "that's", "thats", "the", "their", "theirs", "them", "themselves", "then", "thence", "there", "there's", "thereafter", "thereby", "therefore", "therein", "theres", "thereupon", "these", "they", "they'd", "they'll", "they're", "they've", "think", "third", "this", "thorough", "thoroughly", "those", "though", "three", "through", "throughout", "thru", "thus", "to", "together", "too", "took", "toward", "towards", "tried", "tries", "truly", "try", "trying", "twice", "two", "u", "un", "under", "unfortunately", "unless", "unlikely", "until", "unto", "up", "upon", "us", "use", "used", "useful", "uses", "using", "usually", "uucp", "v", "value", "various", "very", "via", "viz", "vs", "w", "want", "wants", "was", "wasn't", "way", "we", "we'd", "we'll", "we're", "we've", "welcome", "well", "went", "were", "weren't", "what", "what's", "whatever", "when", "whence", "whenever", "where", "where's", "whereafter", "whereas", "whereby", "wherein", "whereupon", "wherever", "whether", "which", "while", "whither", "who", "who's", "whoever", "whole", "whom", "whose", "why", "will", "willing", "wish", "with", "within", "without", "won't", "wonder", "would", "would", "wouldn't", "x", "y", "yes", "yet", "you", "you'd", "you'll", "you're", "you've", "your", "yours", "yourself", "yourselves", "z", "zero"]);
+function buildLexemeIndex(rows,hideStops=false){const map=new Map();for(const r of rows){let w=norm(String(r["Words"]||"").trim()).replace(/^[-–—\s\p{P}]+|[-–—\s\p{P}]+$/gu,"");if(!w) continue;if(hideStops&&STOPWORDS.has(w)) continue;const id=extractLetterId(r['Letter']);if(!map.has(w)) map.set(w,{letters:new Set(),occurrence:0});const o=map.get(w);o.letters.add(id);o.occurrence++;}return [...map.entries()].map(([w,o])=>[w,[...o.letters].sort(naturalCmp),o.occurrence]).sort((a,b)=>a[0].localeCompare(b[0]));}
+function renderLexemeIndex(entries){return entries.map(([w,ids,occurrence])=>`< "${w}" : ${ids.join(', ')} | letters=${ids.length}, occurrence=${occurrence} >`).join('\n');}
+function initLexemePane(rows){const pre=$('#lexemeText');const summary=$('#lexemeSummary');const redraw=()=>{const entries=buildLexemeIndex(rows,$('#hideStopwords')?.checked);const q=$('#lexemeFilter').value.trim().toLowerCase();const filtered=q?entries.filter(([w])=>w.includes(q)):entries;pre.textContent=renderLexemeIndex(filtered);summary.textContent=`${filtered.length} / ${entries.length} lexemes`;};redraw();$('#lexemeFilter').addEventListener('input',redraw);$('#hideStopwords')?.addEventListener('change',redraw);$('#copyLexemeIndex').addEventListener('click',async()=>{try{await navigator.clipboard.writeText(pre.textContent);}catch(e){}});}
+// ---------- Boot ----------
+    function resetTableView(){ renderTable(); }
+    document.addEventListener('DOMContentLoaded', ()=>{
+      initTabs();
+      loadData();
+      initTableUI();
+      applyFilters();
+      initLexemePane(state.data);
+    });
+  </script>
+</body>
+</html>
