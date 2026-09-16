@@ -1,6 +1,11 @@
 <h1><i>The Concordance to Emily Dickinson's letters</i></h1>
 
 <h2>----- 🐝 User instructions -----</h2>
+<h3>Online access.</h3>
+1. Open the following link: <b>https://vladislavareshka.github.io/Concordance-Emily-Dickinson-Letters/</b>.
+<br>2. <b>Enjoy your self!</b>
+<br><br>
+<h3>Offline access.</h3>
 1. Download <b>concordance_dickinson_letters_v[*.*].html</b> file.
 <br>2. <b>Open it</b> in any web browser.
 <br>3. <b>Use with pleasure!</b>
