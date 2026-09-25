@@ -3,17 +3,18 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Concordance - the Letters of Emily Dickinson</title>
+  <title>The Concordance to Emily Dickinson's letters</title>
   <style>
     :root{
-      --bg:#ffffff; --fg:#212529; --muted:#6c757d; --border:#dee2e6; --accent:#0d6efd; --soft:#f8f9fa;
+      --bg:#ffffff; --fg:#212529; --muted:#6c757d; --border:#dee2e6; --accent:#B8860B; --soft:#f8f9fa;
     }
     *{box-sizing:border-box}
     body{margin:0; font:14px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji"; background:var(--bg); color:var(--fg)}
     .container{max-width:1200px; margin:1rem auto; padding:0 1rem}
     h1{font-size:1.5rem; margin:.25rem 0 1rem}
     .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace}
-
+	
+.page-title{border-bottom:2px solid #999;padding:0 0 1rem}
     /* Tabs */
     .tabs{border-bottom:1px solid var(--border); display:flex; gap:.25rem}
     .tabbtn{border:1px solid transparent; border-bottom:0; padding:.5rem .75rem; background:none; cursor:pointer; border-top-left-radius:.25rem; border-top-right-radius:.25rem; color:var(--accent)}
@@ -47,15 +48,23 @@
 
     /* Lexeme index */
     #lexemeIndex pre{max-height:65vh; overflow:auto; background:var(--soft); border:1px solid var(--border); padding:1rem}
-  </style>
+
+    /* About */
+    .about-content{max-width:900px;margin:0 auto;line-height:1.7;}.about-content h3{color:var(--accent);margin-top:1.75rem;margin-bottom:0.75rem;}
+.about-content p{margin-bottom:1rem;}
+  
+/* Footer */
+.footer{border-top:2px solid #999;margin-top:2rem;padding:1rem 4rem 0 5rem;display:grid;grid-template-columns:1fr 1fr;gap:2rem;width:100%}.about-content{max-width:900px}.word-gold{color:#B8860B;font-weight:600}@media(max-width:768px){.footer{grid-template-columns:1fr}.toolbar{flex-wrap:wrap}}
+</style>
+
 </head>
 <body>
   <div class="container">
-    <h1>Concordance - the Letters of Emily Dickinson</h1>
+    <h1 class="page-title">The Concordance to Emily Dickinson's letters</h1>
 
     <div class="tabs" role="tablist" aria-label="Concordance views">
       <button class="tabbtn active" data-target="#pane-table" role="tab" aria-selected="true" aria-controls="pane-table" id="tab-table">Table</button>
-      <button class="tabbtn" data-target="#pane-lexemes" role="tab" aria-selected="false" aria-controls="pane-lexemes" id="tab-lexemes">Lexeme Index</button>
+      <button class="tabbtn" data-target="#pane-lexemes" role="tab" aria-selected="false" aria-controls="pane-lexemes" id="tab-lexemes">Lexeme Index</button><button class="tabbtn" data-target="#pane-about" role="tab">About</button>
     </div>
 
     <!-- TABLE PANE -->
@@ -118,6 +127,52 @@ love = contains
         <pre id="lexemeText" class="mono"></pre>
       </div>
     </section>
+
+    <!-- ABOUT PANE -->
+<section class="tabpanel" id="pane-about" role="tabpanel">
+  <div class="about-content">
+
+    <h3>📜 About the project</h3>
+
+    <p>
+      I am glad to share an interactive, digital concordance of the surviving letters of Emily Dickinson, designed to support scholarly research and textual exploration of her work...
+    </p>
+
+    <p>
+      This concordance is based on and serves as a companion to
+      <a href="https://www.hup.harvard.edu/books/9780674982970"
+         target="_blank"
+         rel="noopener noreferrer">
+         "The Letters of Emily Dickinson" (edited by Cristanne Miller and Domhnall Mitchell, The Belknap Press of Harvard University Press, 2024)
+      </a>,
+      and is intended for a wide range of users, including literary scholars, students, digital humanists, historians of American literature, and anyone interested in Dickinson's language.
+    </p>
+
+    <p>
+      Each concordance entry presents a target word together with its surrounding context and the corresponding letter number, recipient, and date information...
+    </p>
+
+    <p>
+      A dedicated "Lexeme Index" provides an alphabetical inventory of words found in the corpus, along with references to the letters in which they occur.
+    </p>
+
+    <h3>🌱 Work in progress</h3>
+
+    <p>
+      This is an ongoing project. The corpus will be refined: features, search capabilities, interface elements, underlying data, &amp;c. &amp;c. may continue to evolve and change...
+    </p>
+
+    <h3>✉️ Write to me</h3>
+
+    <p>
+      Suggestions, notes, ideas – all are very welcome and can be addressed to the author of the project,
+      Vladislav Areshka
+      (<a href="mailto:vladislav.areshka@gmail.com">vladislav.areshka@gmail.com</a>).
+    </p>
+
+  </div>
+
+</section>
   </div>
 
   <!-- Embedded data -->
@@ -211,7 +266,7 @@ function applyFilters(){
       const start = ps ? (state.page-1)*ps : 0;
       const end = ps ? Math.min(total, start+ps) : total;
       const slice = state.view.slice(start, end);
-      tbody.innerHTML = slice.map(r=>`<tr><td class="mono">${esc(r['LetterNum'])}</td><td>${esc(r['LetterInfo'])}</td><td class="kwic-left">${esc(r['Left Context'])}</td><td>${esc(r['Words'])}</td><td class="kwic-right">${esc(r['Right Context'])}</td></tr>`).join('');
+      tbody.innerHTML = slice.map(r=>`<tr><td class="mono">${esc(r['LetterNum'])}</td><td>${esc(r['LetterInfo'])}</td><td class="kwic-left">${esc(r['Left Context'])}</td><td class='word-gold'>${esc(r['Words'])}</td><td class="kwic-right">${esc(r['Right Context'])}</td></tr>`).join('');
       renderPager(pages, total, start, end);
     }
 
@@ -269,5 +324,31 @@ function initLexemePane(rows){const pre=$('#lexemeText');const summary=$('#lexem
     function resetTableView(){ renderTable(); }
     
   </script>
+<footer class="footer">
+  <div>
+    The concordance is licensed under a
+    <a href="https://creativecommons.org/licenses/by/4.0/"
+       target="_blank"
+       rel="noopener noreferrer"
+       title="https://creativecommons.org/licenses/by/4.0/">
+       Creative Commons Attribution 4.0 International license
+    </a>.
+    <br><br>Author: Dr Vladislav Areshka.
+  </div>
+
+  <div>
+    When citing this website or any data from the database, please use the following citation:<br><br>
+    <em>The Concordance to Emily Dickinson's letters</em> (2026).
+    Compiled by Vladislav Areshka.
+    Available at:
+    &lt;<a href="https://vladislavareshka.github.io/Concordance-Emily-Dickinson-Letters/"
+       target="_blank"
+       rel="noopener noreferrer"
+       title="https://vladislavareshka.github.io/Concordance-Emily-Dickinson-Letters/">
+       https://vladislavareshka.github.io/Concordance-Emily-Dickinson-Letters/
+    </a>&gt;.
+  </div>
+</footer>
+
 </body>
 </html>
